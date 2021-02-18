@@ -5,9 +5,10 @@ The purpose of this game is to demonstrate the adaptability of a Bayesian Infere
 This game uses the following assets for the [chess board and pieces](https://assetstore.unity.com/packages/3d/props/2d-3d-chess-pack-93915)
 
 The core of the Bayesian network is built on pattern recognition and learning from it's own experience.
-  ## Pattern Recongnition
-   - Being able to classify user's moves and exercise an appropriate response.
 
-  ## Playing Refinement
-   - Continously refine the search heuristic for realisticly calculating the right moves (Otherwise there are too many possible moves)
+**Pattern Recongnition**
+- Being able to classify user's moves and exercise an appropriate response.
+
+**Playing Refinement**
+- Continously refine the search heuristic for realisticly calculating the right moves (Otherwise there are too many possible moves)
 
