@@ -12,7 +12,7 @@ public abstract class Piece : MonoBehaviour
     public TeamColor team { get; set; }
     public bool hasMoved { get; private set; }
     public List<Vector2Int> availableMoves; //all available moves for a given piece at a given time
-
+    
     private IObjectTweener tweener;
 
     public abstract List<Vector2Int> SelectAvaliableSquares();
