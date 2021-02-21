@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 8712498110369387035}
   - component: {fileID: 8712498110370157115}
   - component: {fileID: 8712498110371287291}
-  - component: {fileID: -2649580350950679780}
   - component: {fileID: 3944296616972268904}
   - component: {fileID: 8759170312687372305}
+  - component: {fileID: -3754070334254467079}
   m_Layer: 0
   m_Name: Queen
   m_TagString: Untagged
@@ -82,18 +82,6 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!114 &-2649580350950679780
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8712498110369353275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ea608dc6cd37f94d9f257c45ef6104f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &3944296616972268904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -119,3 +107,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   availableMoves: []
+--- !u!114 &-3754070334254467079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8712498110369353275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 734e8d8be0fd8bb47b1ba3ba2eb45aa5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

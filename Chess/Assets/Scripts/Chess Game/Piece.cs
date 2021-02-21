@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -46,7 +47,10 @@ public abstract class Piece : MonoBehaviour
 
     public virtual void MovePiece(Vector2Int coords)
     {
-        //..skip for now
+        Vector3 targetPosition = board.CalculatePosFromCoords(coords);
+        occupiedSquare = coords;
+        hasMoved = true;
+        tweener.MoveTo(transform, targetPosition);
     }
 
     protected void TrytoAddMove(Vector2Int coords)
@@ -61,6 +65,4 @@ public abstract class Piece : MonoBehaviour
         this.board = board;
         transform.position = board.CalculatePosFromCoords(coords);
     }
-
-
 }

@@ -3,13 +3,154 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(SquareSelectorCreator))]
 public class Board : MonoBehaviour
 {
+    private const int BOARD_SIZE = 8;
+
     [SerializeField] private Transform bottomLeftSquareTransform;
     [SerializeField] private float squareSize;
 
+    private Piece[,] grid; //store where the pieces are placed
+    private Piece selectedPiece;
+    private ChessGameControl chessController; //facade
+    private SquareSelectorCreator squareSelector;
+
+    private void Awake()
+    {
+        squareSelector = GetComponent<SquareSelectorCreator>();
+        CreateGrid();
+    }
+
+    public void SetDependencies(ChessGameControl chessController)
+    {
+        this.chessController = chessController;
+    }
+
+    private void CreateGrid()
+    {
+        grid = new Piece[BOARD_SIZE, BOARD_SIZE];
+    }
+
     internal Vector3 CalculatePosFromCoords(Vector2Int coords)
     {
-        return bottomLeftSquareTransform.position + new Vector3(coords.x * squareSize, .0f, coords.y * squareSize);
+        return bottomLeftSquareTransform.position + new Vector3(coords.x * squareSize, 0f, coords.y * squareSize);
+    }
+
+    private Vector2Int CalculateCoordsFromPos(Vector3 inputPosition)
+    {
+        int x = Mathf.FloorToInt(transform.InverseTransformPoint(inputPosition).x / squareSize) + BOARD_SIZE /2;
+        int y = Mathf.FloorToInt(transform.InverseTransformPoint(inputPosition).z / squareSize) + BOARD_SIZE /2;
+
+        Debug.Log("Calculate click coords: " + x + "," + y);
+
+        return new Vector2Int(x, y);
+    }
+
+    public void OnSquareSelected(Vector3 inputPosition)
+    {
+        Vector2Int coords = CalculateCoordsFromPos(inputPosition);
+        Piece piece = GetPieceOnSquare(coords); //based on user click return piece location
+        //check if piece has already been selected
+        if (selectedPiece)
+        {
+            Debug.Log("Selected Piece: " + selectedPiece.name + selectedPiece.team + " at " + coords.x + "," + coords.y); ;
+            //check if selected piece is same as piece just clicked on
+            if (piece != null && selectedPiece == piece)
+            {
+                DeselectPiece();
+            }
+            //check if selected piece is not the same as jsut clicked on and from the same team as active player
+            else if(piece != null && selectedPiece != piece && chessController.IsTeamTurnActive(piece.team))
+            {
+                SelectPiece(piece);
+            }
+            else if (selectedPiece.CanMoveTo(coords))
+            {
+                OnSelectedPieceMove(coords, selectedPiece);
+            }
+        }
+        else //if no piece has been selected yet
+        {
+            if (piece != null && chessController.IsTeamTurnActive(piece.team))
+            {
+                SelectPiece(piece);
+            }
+        }
+    }
+
+    public void setPieceOnBoard(Vector2Int coords, Piece piece)
+    {
+        if (CheckIfCoordAreOnBoard(coords))
+        {
+            //Debug.Log(piece.team + piece.name + " set at " + coords.x + "," + coords.y);
+            grid[coords.x, coords.y] = piece;
+        }
+    }
+
+    private void OnSelectedPieceMove(Vector2Int coords, Piece piece)
+    {
+        //update data on grid array (new coordinates, old coordinates, piece, piece in old coords)
+        UpdateBoardOnPieceMove(coords, piece.occupiedSquare, piece, null);
+        selectedPiece.MovePiece(coords);
+        DeselectPiece();
+        EndTurn();
+    }
+
+    private void EndTurn()
+    {
+        chessController.EndTurn();
+    }
+
+    private void UpdateBoardOnPieceMove(Vector2Int newCoords, Vector2Int oldCoords, Piece newPiece, Piece oldPiece)
+    {
+        Debug.Log("Old Coords: " + oldCoords.x + "," + oldCoords.y);
+        Debug.Log("New Coords: " + newCoords.x + "," + newCoords.y);
+        grid[oldCoords.x, oldCoords.y] = oldPiece;
+        grid[newCoords.x, newCoords.y] = newPiece;
+    }
+
+    private void SelectPiece(Piece piece)
+    {
+        selectedPiece = piece;
+    }
+
+    private void DeselectPiece()
+    {
+        selectedPiece = null;
+    }
+
+    private Piece GetPieceOnSquare(Vector2Int coords)
+    {
+        if (CheckIfCoordAreOnBoard(coords))
+        {
+            return grid[coords.x, coords.y];
+        }
+        return null;
+    }
+
+    private bool CheckIfCoordAreOnBoard(Vector2Int coords)
+    {
+        if (coords.x < 0 || coords.y < 0 || coords.x >= BOARD_SIZE || coords.y >= BOARD_SIZE)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public bool HasPiece(Piece piece)
+    {
+        for (int i = 0; i < BOARD_SIZE; i++)
+        {
+            for (int j = 0; j < BOARD_SIZE; j++)
+            {
+                //if chess piece is already in a desired position
+                if (grid[i,j] == piece)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
