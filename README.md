@@ -9,6 +9,7 @@ The purpose of this game is to demonstrate the adaptability of a Bayesian Infere
 
 
 The core of the Bayesian network is built on pattern recognition and learning from it's own experience.
+
 **Pattern Recongnition**
 - Being able to classify user's moves and exercise an appropriate response.
 
