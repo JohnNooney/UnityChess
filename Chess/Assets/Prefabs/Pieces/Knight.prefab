@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2272951049042810736}
   - component: {fileID: 3824314753618884595}
   - component: {fileID: -9048582093238121149}
-  - component: {fileID: 4501947582169014846}
+  - component: {fileID: 5590164791982516622}
   m_Layer: 0
   m_Name: Knight
   m_TagString: Untagged
@@ -94,6 +94,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7be12fa9815412a45b4e380ace4671f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _meshRenderer: {fileID: 0}
 --- !u!114 &-9048582093238121149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,8 +107,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a964fbf8e807e434cbdb093398339c4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  materialSetter: {fileID: 0}
   availableMoves: []
---- !u!114 &4501947582169014846
+--- !u!114 &5590164791982516622
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -116,6 +118,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 2272951049045068208}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 734e8d8be0fd8bb47b1ba3ba2eb45aa5, type: 3}
+  m_Script: {fileID: 11500000, guid: 4a8619223dfd6c549b8e9455ae3a9415, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  speed: 6
+  height: 3
