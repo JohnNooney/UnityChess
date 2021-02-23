@@ -13,7 +13,7 @@ public class Bishop : Piece
     };
     public override List<Vector2Int> SelectAvaliableSquares()
     {
-        avaliableMoves.Clear();
+        availableMoves.Clear();
         float range = Board.BOARD_SIZE;
         foreach (var direction in directions)
         {
@@ -34,6 +34,6 @@ public class Bishop : Piece
                     break;
             }
         }
-        return avaliableMoves;
+        return availableMoves;
     }
 }

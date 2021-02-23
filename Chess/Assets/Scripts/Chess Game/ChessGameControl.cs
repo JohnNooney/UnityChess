@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(PieceCreation))]
 public class ChessGameControl : MonoBehaviour
 {
+    private enum GameState { Init, Play, Finished}
+
     [SerializeField] private BoardLayout startingBoardLayout;
     [SerializeField] private Board board;
+    [SerializeField] private ChessUIManager manager;
 
     private PieceCreation pieceCreator;
     private ChessPlayer whitePlayer;
     private ChessPlayer blackPlayer;
     private ChessPlayer activePlayer;
+
+    private GameState currentState;
 
     private void Awake()
     {
@@ -38,10 +44,38 @@ public class ChessGameControl : MonoBehaviour
 
     private void StartNewGame()
     {
+        manager.HideUI(); //hide game over ui
+        SetGameState(GameState.Init);
         board.SetDependencies(this);
         CreatePiecesFromLayout(startingBoardLayout);
         activePlayer = whitePlayer;
         GenerateAllPossiblePlayerMoves(activePlayer);
+        SetGameState(GameState.Play);
+    }
+
+    public void RestartGame()
+    {
+        DestroyPieces();
+        board.OnGameRestarted();
+        whitePlayer.OnGameRestarted();
+        blackPlayer.OnGameRestarted();
+        StartNewGame();
+    }
+
+    private void DestroyPieces()
+    {
+        whitePlayer.activePieces.ForEach(p => Destroy(p.gameObject));
+        blackPlayer.activePieces.ForEach(p => Destroy(p.gameObject));
+    }
+
+    private void SetGameState(GameState state)
+    {
+        this.currentState = state;
+    }
+
+    public bool IsGameInProgress()
+    {
+        return currentState == GameState.Play;
     }
 
     private void CreatePiecesFromLayout(BoardLayout layout)
@@ -60,7 +94,7 @@ public class ChessGameControl : MonoBehaviour
         }
     }
 
-    private void CreatePieceAndInit(Vector2Int squareCoords, TeamColor team, Type type)
+    public void CreatePieceAndInit(Vector2Int squareCoords, TeamColor team, Type type)
     {
         //choose the cooresponding prefab of the piece to the name given
         Piece newPiece = pieceCreator.CreatePiece(type).GetComponent<Piece>();
@@ -86,11 +120,55 @@ public class ChessGameControl : MonoBehaviour
         player.GenerateAllPossibleMoves();
     }
 
-    internal void EndTurn()
+    public void EndTurn()
     {
         GenerateAllPossiblePlayerMoves(activePlayer);
         GenerateAllPossiblePlayerMoves(GetOpponentToPlayer(activePlayer));
-        ChangeActiveTeam();
+        if (CheckGameIsFinished())
+        {
+            EndGame();
+        }
+        else
+        {
+            ChangeActiveTeam();
+        }
+    }
+
+    //Check if there is a check mate on the board
+    private bool CheckGameIsFinished()
+    {
+        Piece[] kingAttackingPieces = activePlayer.GetOpponentAttackingPieces<King>();
+        if (kingAttackingPieces.Length > 0)
+        {
+            ChessPlayer oppositePlayer = GetOpponentToPlayer(activePlayer);
+            Piece attackedKing = oppositePlayer.GetPiecesOfType<King>().FirstOrDefault();
+            oppositePlayer.RemoveMovesEnablingAttackOnPiece<King>(activePlayer, attackedKing);
+
+            int availbaleKingMoves = attackedKing.availableMoves.Count;
+            if (availbaleKingMoves == 0) //if king cant move, see if piece can block check
+            {
+                bool canCoverKing = oppositePlayer.BlockCheckMate<King>(activePlayer);
+                if (!canCoverKing) 
+                {
+                    return true; //if no piece can block then game over
+                }
+            }
+        }
+        return false;
+    }
+
+    public void OnPieceRemoved(Piece piece)
+    {
+        ChessPlayer pieceOwner = (piece.team == TeamColor.White) ? whitePlayer : blackPlayer;
+        pieceOwner.RemovePiece(piece);
+        Destroy(piece.gameObject);
+    }
+
+    private void EndGame()
+    {
+        Debug.Log("Game Over");
+        manager.OnGameFinished(activePlayer.team.ToString());
+        SetGameState(GameState.Finished);
     }
 
     private void ChangeActiveTeam()
@@ -102,5 +180,13 @@ public class ChessGameControl : MonoBehaviour
     {
         //switch teams (if white go to black and vice versa)
         return player == whitePlayer ? blackPlayer : whitePlayer;
+    }
+
+    /// <summary>
+    /// when in check remove square selector from invalid moves
+    /// </summary>
+    public void NullifyInvalidAttacksOnType<T>(Piece piece) where T : Piece
+    {
+        activePlayer.RemoveMovesEnablingAttackOnPiece<T>(GetOpponentToPlayer(activePlayer), piece);
     }
 }

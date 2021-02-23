@@ -13,7 +13,7 @@ public abstract class Piece : MonoBehaviour
 	public Vector2Int occupiedSquare { get; set; }
 	public TeamColor team { get; set; }
 	public bool hasMoved { get; private set; }
-	public List<Vector2Int> avaliableMoves;
+	public List<Vector2Int> availableMoves;
 
 	private IObjectTweener tweener;
 
@@ -21,7 +21,7 @@ public abstract class Piece : MonoBehaviour
 
 	private void Awake()
 	{
-		avaliableMoves = new List<Vector2Int>();
+		availableMoves = new List<Vector2Int>();
 		tweener = GetComponent<IObjectTweener>();
 		materialSetter = GetComponent<MaterialSetter>();
 		hasMoved = false;
@@ -39,7 +39,7 @@ public abstract class Piece : MonoBehaviour
 
 	public bool CanMoveTo(Vector2Int coords)
 	{
-		return avaliableMoves.Contains(coords);
+		return availableMoves.Contains(coords);
 	}
 
 	public virtual void MovePiece(Vector2Int coords)
@@ -50,10 +50,21 @@ public abstract class Piece : MonoBehaviour
 		tweener.MoveTo(transform, targetPosition);
 	}
 
+	public bool IsAttackingPieceOfType<T>() where T : Piece
+    {
+        foreach (var square in availableMoves)
+        {
+            if (board.GetPieceOnSquare(square) is T)
+            {
+				return true;
+            }
+        }
+		return false;
+    }
 
-	protected void TryToAddMove(Vector2Int coords)
+    protected void TryToAddMove(Vector2Int coords)
 	{
-		avaliableMoves.Add(coords);
+		availableMoves.Add(coords);
 	}
 
 	public void SetData(Vector2Int coords, TeamColor team, Board board)

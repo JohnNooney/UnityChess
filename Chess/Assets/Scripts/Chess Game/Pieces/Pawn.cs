@@ -7,7 +7,7 @@ public class Pawn : Piece
 {
     public override List<Vector2Int> SelectAvaliableSquares()
     {
-        avaliableMoves.Clear();
+        availableMoves.Clear();
 
         Vector2Int direction = team == TeamColor.White ? Vector2Int.up : Vector2Int.down;
         float range = hasMoved ? 1 : 2;
@@ -35,6 +35,21 @@ public class Pawn : Piece
                 TryToAddMove(nextCoords);
             }
         }
-        return avaliableMoves;
-    }  
+        return availableMoves;
+    }
+
+    public override void MovePiece(Vector2Int coords)
+    {
+        base.MovePiece(coords);
+        CheckPromotion();
+    }
+
+    private void CheckPromotion()
+    {
+        int endOfBoardYCoord = team == TeamColor.White ? Board.BOARD_SIZE - 1 : 0;
+        if (occupiedSquare.y == endOfBoardYCoord)
+        {
+            board.PromotePiece(this);
+        }
+    }
 }

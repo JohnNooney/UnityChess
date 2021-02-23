@@ -7,7 +7,7 @@ public class Rook : Piece
     private Vector2Int[] directions = new Vector2Int[] { Vector2Int.left, Vector2Int.up, Vector2Int.right, Vector2Int.down };
     public override List<Vector2Int> SelectAvaliableSquares()
     {
-        avaliableMoves.Clear();
+        availableMoves.Clear();
 
         float range = Board.BOARD_SIZE;
         foreach (var direction in directions)
@@ -29,7 +29,7 @@ public class Rook : Piece
                     break;
             }
         }
-        return avaliableMoves;
+        return availableMoves;
     }
 
   
