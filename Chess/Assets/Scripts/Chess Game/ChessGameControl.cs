@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 [RequireComponent(typeof(PieceCreation))]
@@ -17,6 +18,8 @@ public class ChessGameControl : MonoBehaviour
     private ChessPlayer whitePlayer;
     private ChessPlayer blackPlayer;
     private ChessPlayer activePlayer;
+
+    private ChessPlayer computer; //one of the players will be human, the other Computer
 
     private GameState currentState;
 
@@ -35,6 +38,9 @@ public class ChessGameControl : MonoBehaviour
     {
         whitePlayer = new ChessPlayer(TeamColor.White, board);
         blackPlayer = new ChessPlayer(TeamColor.Black, board);
+
+        //set computer color
+        computer = blackPlayer;
     }
 
     void Start()
@@ -174,6 +180,46 @@ public class ChessGameControl : MonoBehaviour
     private void ChangeActiveTeam()
     {
         activePlayer = activePlayer == whitePlayer ? blackPlayer : whitePlayer;
+
+        //check if the active player is the computer
+        if (ComputerMoveCheck())
+        {
+            ComputerMove();
+        }
+    }
+
+    public bool ComputerMoveCheck()
+    {
+        if (activePlayer == computer)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public void ComputerMove()
+    {
+        Thread.Sleep(200);
+        while (true && !CheckGameIsFinished())
+        {
+            
+            //randomly generate coordinates for piece selection
+            int randActivePiece = UnityEngine.Random.Range(0, computer.activePieces.Count);
+            Piece randPieceSelect = computer.activePieces[randActivePiece];
+            board.ComputerInput(randPieceSelect.occupiedSquare.x, randPieceSelect.occupiedSquare.y); //select
+
+            //if there is a selected piece
+            if (board.selectedPiece != null && board.HasPiece(randPieceSelect) && randPieceSelect.availableMoves.Count > 0)
+            {
+                //pick a random element in the available moves list
+                int randMove = UnityEngine.Random.Range(0, randPieceSelect.availableMoves.Count);
+                Vector2Int randMoveCoords = randPieceSelect.availableMoves[randMove];
+
+                board.ComputerInput(randMoveCoords.x, randMoveCoords.y); //move
+                break;
+            }
+        }
+        
     }
 
     private ChessPlayer GetOpponentToPlayer(ChessPlayer player)
