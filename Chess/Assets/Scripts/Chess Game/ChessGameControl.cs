@@ -10,6 +10,7 @@ public class ChessGameControl : MonoBehaviour
 {
     private enum GameState { Init, Play, Finished}
 
+
     [SerializeField] private BoardLayout startingBoardLayout;
     [SerializeField] private Board board;
     [SerializeField] private ChessUIManager manager;
@@ -19,6 +20,12 @@ public class ChessGameControl : MonoBehaviour
     private ChessPlayer blackPlayer;
     private ChessPlayer activePlayer;
 
+    //Personal Code: added score tracking into the game
+    public Dictionary<String, int> pieceToValueDict = new Dictionary<String, int>();
+    //public int blackScore;
+    //public int whiteScore;
+
+    //Personal Code: computer team identifier
     private ChessPlayer computer; //one of the players will be human, the other Computer
 
     private GameState currentState;
@@ -32,6 +39,14 @@ public class ChessGameControl : MonoBehaviour
     private void setDependencies()
     {
         pieceCreator = GetComponent<PieceCreation>();
+
+        //Personal Code: Init each piece's score weightss
+        pieceToValueDict.Add("King", 900);
+        pieceToValueDict.Add("Queen", 90);
+        pieceToValueDict.Add("Rook", 50);
+        pieceToValueDict.Add("Bishop", 30);
+        pieceToValueDict.Add("Knight", 30);
+        pieceToValueDict.Add("Pawn", 10);
     }
 
     private void CreatePlayers()
@@ -57,6 +72,10 @@ public class ChessGameControl : MonoBehaviour
         activePlayer = whitePlayer;
         GenerateAllPossiblePlayerMoves(activePlayer);
         SetGameState(GameState.Play);
+
+        //calculate starting scores (should be 1290 for each team)
+        GetBoardScore(whitePlayer);
+        GetBoardScore(blackPlayer);
     }
 
     public void RestartGame()
@@ -93,7 +112,7 @@ public class ChessGameControl : MonoBehaviour
             TeamColor team = layout.GetSquareTeamAtIndex(i);
             string typeName = layout.GetSquarePieceNameAtIndex(i);
 
-            Debug.Log(team + " " + typeName + " at " + squareCoords.x + "," + squareCoords.y);
+            //Debug.Log(team + " " + typeName + " at " + squareCoords.x + "," + squareCoords.y);
 
             Type type = Type.GetType(typeName);
             CreatePieceAndInit(squareCoords, team, type);
@@ -130,6 +149,10 @@ public class ChessGameControl : MonoBehaviour
     {
         GenerateAllPossiblePlayerMoves(activePlayer);
         GenerateAllPossiblePlayerMoves(GetOpponentToPlayer(activePlayer));
+
+        //before the end of the game check the scores of each player
+        GetBoardScore(activePlayer);
+
         if (CheckGameIsFinished())
         {
             EndGame();
@@ -197,31 +220,6 @@ public class ChessGameControl : MonoBehaviour
         return false;
     }
 
-    public void ComputerMove()
-    {
-        Thread.Sleep(200);
-        while (true && !CheckGameIsFinished())
-        {
-            
-            //randomly generate coordinates for piece selection
-            int randActivePiece = UnityEngine.Random.Range(0, computer.activePieces.Count);
-            Piece randPieceSelect = computer.activePieces[randActivePiece];
-            board.ComputerInput(randPieceSelect.occupiedSquare.x, randPieceSelect.occupiedSquare.y); //select
-
-            //if there is a selected piece
-            if (board.selectedPiece != null && board.HasPiece(randPieceSelect) && randPieceSelect.availableMoves.Count > 0)
-            {
-                //pick a random element in the available moves list
-                int randMove = UnityEngine.Random.Range(0, randPieceSelect.availableMoves.Count);
-                Vector2Int randMoveCoords = randPieceSelect.availableMoves[randMove];
-
-                board.ComputerInput(randMoveCoords.x, randMoveCoords.y); //move
-                break;
-            }
-        }
-        
-    }
-
     private ChessPlayer GetOpponentToPlayer(ChessPlayer player)
     {
         //switch teams (if white go to black and vice versa)
@@ -234,5 +232,66 @@ public class ChessGameControl : MonoBehaviour
     public void NullifyInvalidAttacksOnType<T>(Piece piece) where T : Piece
     {
         activePlayer.RemoveMovesEnablingAttackOnPiece<T>(GetOpponentToPlayer(activePlayer), piece);
+    }
+
+
+    //Personal Code: Currently randomly selects an active piece on the board
+    //from that piece, randomly select a possible move
+    public void ComputerMove()
+    {
+        Thread.Sleep(200);
+        while (true && !CheckGameIsFinished())
+        {
+
+            //randomly generate coordinates for piece selection
+            int randActivePiece = UnityEngine.Random.Range(0, computer.activePieces.Count);
+            Piece randPieceSelect = computer.activePieces[randActivePiece];
+            board.ComputerInputRandom(randPieceSelect.occupiedSquare.x, randPieceSelect.occupiedSquare.y); //select
+
+            //if there is a selected piece
+            if (board.selectedPiece != null && board.HasPiece(randPieceSelect) && randPieceSelect.availableMoves.Count > 0)
+            {
+                //pick a random element in the available moves list
+                int randMove = UnityEngine.Random.Range(0, randPieceSelect.availableMoves.Count);
+                Vector2Int randMoveCoords = randPieceSelect.availableMoves[randMove];
+
+                board.ComputerInputRandom(randMoveCoords.x, randMoveCoords.y); //move
+                break;
+            }
+        }
+
+    }
+
+    private void GetBoardScore(ChessPlayer player)
+    {
+        //depending on which player's score is being tested reset it and count again
+        player.score = 0;
+
+        foreach (var activePiece in player.activePieces)
+        {
+            foreach (var pair in pieceToValueDict)
+            {
+                if (activePiece.GetComponent<Piece>().GetType().ToString() == pair.Key)
+                {
+                    player.score += pair.Value;
+                }
+            }
+        }
+
+        Debug.Log( player.team + " score is: " + player.score);
+    }
+
+    //Personal Code: Heuristic Evaluation Function for MiniMax
+    //upon each piece loss evaluate score compared to opponent
+    private int Evaluate(ChessPlayer player)
+    {
+        if (player == whitePlayer)
+        {
+            return whitePlayer.score - blackPlayer.score;
+        }
+        else
+        {
+            return blackPlayer.score - whitePlayer.score;
+        }
     }
 }

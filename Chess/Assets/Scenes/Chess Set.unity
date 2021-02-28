@@ -997,7 +997,7 @@ GameObject:
   - component: {fileID: 821334994}
   m_Layer: 0
   m_Name: Camera_TopDown
-  m_TagString: MainCamera
+  m_TagString: Start
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1046,7 +1046,7 @@ Camera:
   field of view: 60
   orthographic: 0
   orthographic size: 6.87
-  m_Depth: 0
+  m_Depth: 5
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1068,13 +1068,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 821334993}
-  m_LocalRotation: {x: 0.47506458, y: -0, z: -0, w: 0.879951}
-  m_LocalPosition: {x: 4.5, y: 18.48, z: -5.95}
+  m_LocalRotation: {x: -0, y: 0.14907992, z: -0, w: 0.98882514}
+  m_LocalPosition: {x: -10.51, y: 3.47, z: -10.01}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 56.727, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 17.147001, z: 0}
 --- !u!1 &857059843
 GameObject:
   m_ObjectHideFlags: 0
@@ -2206,18 +2206,33 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
         type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
+        type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
+        type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.010935
+      value: -6.08
       objectReference: {fileID: 0}
     - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.011529
+      value: -5.42
       objectReference: {fileID: 0}
     - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.0072399
+      value: 14.38
       objectReference: {fileID: 0}
     - target: {fileID: 5983027633613873654, guid: 3898a73849d198242832f8920bb0490a,
         type: 3}

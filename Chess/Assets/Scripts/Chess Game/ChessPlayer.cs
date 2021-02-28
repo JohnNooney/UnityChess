@@ -11,6 +11,8 @@ public class ChessPlayer
     public Board board { get; set;  }
     public List<Piece> activePieces { get; private set; }
 
+    public int score;
+
     public ChessPlayer(TeamColor team, Board board)
     {
         this.board = board;

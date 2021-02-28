@@ -16,6 +16,7 @@ public class PieceCreation : MonoBehaviour
         foreach (var piece in piecesPrefabs)
         {
             nameToPieceDict.Add(piece.GetComponent<Piece>().GetType().ToString(), piece);
+
         }
     }
 

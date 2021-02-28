@@ -12,9 +12,11 @@ public class Board : MonoBehaviour
     [SerializeField] private float squareSize;
 
     private Piece[,] grid; //store where the pieces are placed
-    public Piece selectedPiece;
     private ChessGameControl chessController; //facade
     private SquareSelectorCreator squareSelector;
+
+    public Piece selectedPiece;
+
 
     private void Awake()
     {
@@ -42,7 +44,7 @@ public class Board : MonoBehaviour
         int x = Mathf.FloorToInt(transform.InverseTransformPoint(inputPosition).x / squareSize) + BOARD_SIZE /2;
         int y = Mathf.FloorToInt(transform.InverseTransformPoint(inputPosition).z / squareSize) + BOARD_SIZE /2;
 
-        Debug.Log("Calculate click coords: " + x + "," + y);
+        //Debug.Log("Calculate click coords: " + x + "," + y);
 
         return new Vector2Int(x, y);
     }
@@ -64,7 +66,7 @@ public class Board : MonoBehaviour
         //check if piece has already been selected
         if (selectedPiece)
         {
-            Debug.Log("Selected Piece: " + selectedPiece.name + selectedPiece.team + " at " + coords.x + "," + coords.y); ;
+            //Debug.Log("Selected Piece: " + selectedPiece.name + selectedPiece.team + " at " + coords.x + "," + coords.y); ;
             //check if selected piece is same as piece just clicked on
             if (piece != null && selectedPiece == piece)
             {
@@ -139,8 +141,8 @@ public class Board : MonoBehaviour
 
     public void UpdateBoardOnPieceMove(Vector2Int newCoords, Vector2Int oldCoords, Piece newPiece, Piece oldPiece)
     {
-        Debug.Log("Old Coords: " + oldCoords.x + "," + oldCoords.y);
-        Debug.Log("New Coords: " + newCoords.x + "," + newCoords.y);
+        //Debug.Log("Old Coords: " + oldCoords.x + "," + oldCoords.y);
+        //Debug.Log("New Coords: " + newCoords.x + "," + newCoords.y);
         grid[oldCoords.x, oldCoords.y] = oldPiece;
         grid[newCoords.x, newCoords.y] = newPiece;
     }
@@ -204,58 +206,38 @@ public class Board : MonoBehaviour
         return false;
     }
 
-    //computer's current algorithm for playing the game
-    public void ComputerInput(int xCoord, int yCoord)
+    //computer's random algorithm for playing the game
+    public void ComputerInputRandom(int xCoord, int yCoord)
     {
-       // bool flag = true;
-        //loop until a possible piece can move
-        //while (flag)
-        //{
-            //create a random number to select a piece on the grid with
-            //int xCoord = UnityEngine.Random.Range(0, 7);
-            //int yCoord = UnityEngine.Random.Range(0, 7);
-
-            Vector2Int coords = new Vector2Int(xCoord, yCoord);
-
-            //loop through all pieces and try to select one
-           // for (int col = 0; col < grid.GetLength(0); col++){
-                //for (int row = 0; row < grid.GetLength(1); row++){
-                    Piece piece = GetPieceOnSquare(coords);
-                    //check if piece has already been selected
-                    if (selectedPiece)
-                    {
-                        Debug.Log("Selected Piece: " + selectedPiece.name + selectedPiece.team + " at " + coords.x + "," + coords.y); ;
-                        //check if selected piece is same as piece just clicked on
-                        if (piece != null && selectedPiece == piece)
-                        {
-                            DeselectPiece();
-                        }
-                        //check if selected piece is not the same as jsut clicked on and from the same team as active player
-                        else if (piece != null && selectedPiece != piece && chessController.IsTeamTurnActive(piece.team))
-                        {
-                            SelectPiece(piece);
-                        }
-                        else if (selectedPiece.CanMoveTo(coords))
-                        {
-                            //attempt to take piece if that is desired action, otherwise just move
-                            OnSelectedPieceMove(coords, selectedPiece); 
-                            //flag = false;
-                        }
-                    }
-                    else //if no piece has been selected yet
-                    {
-                        if (piece != null && chessController.IsTeamTurnActive(piece.team))
-                        {
-                            SelectPiece(piece);
-                        }
-                    }
-                    //if (temp.occupiedSquare == testCoords){
-                        
-                    //    Debug.Log("Computer Coords: " + xCoord + "," + yCoord + " on " + temp.team + " " + temp.name);
-                    //    break;
-                    //}
-                //}
-            //}
-       // }
+        Vector2Int coords = new Vector2Int(xCoord, yCoord);
+        Piece piece = GetPieceOnSquare(coords);
+        //check if piece has already been selected
+        if (selectedPiece)
+        {
+            //Debug.Log("Selected Piece: " + selectedPiece.name + selectedPiece.team + " at " + coords.x + "," + coords.y); ;
+            //check if selected piece is same as piece just clicked on
+            if (piece != null && selectedPiece == piece)
+            {
+                DeselectPiece();
+            }
+            //check if selected piece is not the same as jsut clicked on and from the same team as active player
+            else if (piece != null && selectedPiece != piece && chessController.IsTeamTurnActive(piece.team))
+            {
+                SelectPiece(piece);
+            }
+            else if (selectedPiece.CanMoveTo(coords))
+            {
+                //attempt to take piece if that is desired action, otherwise just move
+                OnSelectedPieceMove(coords, selectedPiece); 
+                //flag = false;
+            }
+        }
+        else //if no piece has been selected yet
+        {
+            if (piece != null && chessController.IsTeamTurnActive(piece.team))
+            {
+                SelectPiece(piece);
+            }
+        }
     }
 }
