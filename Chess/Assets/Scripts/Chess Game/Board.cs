@@ -12,10 +12,17 @@ public class Board : MonoBehaviour
     [SerializeField] private float squareSize;
 
     private Piece[,] grid; //store where the pieces are placed
+    private Piece[,] oldGrid; //store where the piece of the last move are on the grid
     private ChessGameControl chessController; //facade
     private SquareSelectorCreator squareSelector;
 
+    //Personal Code: added score tracking into the game
+    public Dictionary<String, int> pieceToValueDict = new Dictionary<String, int>();
+    public int oldBlackPlayerScore;
+    public int oldWhitePlayerScore;
+
     public Piece selectedPiece;
+    public bool moveSimulation = false;
 
 
     private void Awake()
@@ -27,6 +34,14 @@ public class Board : MonoBehaviour
     public void SetDependencies(ChessGameControl chessController)
     {
         this.chessController = chessController;
+
+        //Personal Code: Init each piece's score weightss
+        pieceToValueDict.Add("King", 900);
+        pieceToValueDict.Add("Queen", 90);
+        pieceToValueDict.Add("Rook", 50);
+        pieceToValueDict.Add("Bishop", 30);
+        pieceToValueDict.Add("Knight", 30);
+        pieceToValueDict.Add("Pawn", 10);
     }
 
     private void CreateGrid()
@@ -121,6 +136,10 @@ public class Board : MonoBehaviour
         Piece piece = GetPieceOnSquare(coords);
         if (piece != null && !selectedPiece.IsFromSameTeam(piece))
         {
+            if (moveSimulation)
+            {
+                SimulateTakePiece(piece);
+            }
             TakePiece(piece);
         }
     }
@@ -134,6 +153,16 @@ public class Board : MonoBehaviour
         }
     }
 
+    //modified version of TakePiece which doesn't destory the physical piece only the grid position
+    private void SimulateTakePiece(Piece piece)
+    {
+        if (piece)
+        {
+            grid[piece.occupiedSquare.x, piece.occupiedSquare.y] = null;
+            //chessController.OnPieceRemoved(piece);
+        }
+    }
+
     private void EndTurn()
     {
         chessController.EndTurn();
@@ -143,9 +172,17 @@ public class Board : MonoBehaviour
     {
         //Debug.Log("Old Coords: " + oldCoords.x + "," + oldCoords.y);
         //Debug.Log("New Coords: " + newCoords.x + "," + newCoords.y);
-        grid[oldCoords.x, oldCoords.y] = oldPiece;
+       // oldGrid = grid;
+        grid[oldCoords.x, oldCoords.y] = oldPiece; 
         grid[newCoords.x, newCoords.y] = newPiece;
     }
+
+    public void Undo()
+    {
+        grid = oldGrid; //remap old grid
+        oldGrid = null; //clear the old move
+    }
+
     private void SelectPiece(Piece piece)
     {
         chessController.NullifyInvalidAttacksOnType<King>(piece);
@@ -207,7 +244,7 @@ public class Board : MonoBehaviour
     }
 
     //computer's random algorithm for playing the game
-    public void ComputerInputRandom(int xCoord, int yCoord)
+    public void ComputerInput(int xCoord, int yCoord)
     {
         Vector2Int coords = new Vector2Int(xCoord, yCoord);
         Piece piece = GetPieceOnSquare(coords);
@@ -240,4 +277,82 @@ public class Board : MonoBehaviour
             }
         }
     }
+
+    public void SimulateMove(Piece piece, Vector2Int move_coords)
+    {
+        moveSimulation = true; //start simulation
+
+        if (piece != null || move_coords != null)
+        {
+            selectedPiece = piece;
+
+            if (selectedPiece.CanMoveTo(move_coords))
+            {
+                //Move piece on grid (modified from OnSelectedPieceMove())
+                TryToTakeOppositePiece(move_coords);
+                //update data on grid array (new coordinates, old coordinates, piece, piece in old coords)
+                UpdateBoardOnPieceMove(move_coords, piece.occupiedSquare, piece, null);
+                //selectedPiece.MovePiece(move_coords); //officially moves piece (team score is updated)
+                DeselectPiece();
+                chessController.SimulateEndTurn();
+            }
+        }
+
+        moveSimulation = false; //end simulation
+    }
+
+    public void saveCurrentGridState()
+    {
+        oldGrid = (Piece[,])grid.Clone(); //save piece coordinates
+        oldBlackPlayerScore = chessController.blackPlayer.score; //save team scores
+        oldWhitePlayerScore = chessController.whitePlayer.score;
+
+    }
+
+    public void returnToStartState()
+    {
+        //grid = oldGrid; //return to original piece coordinates
+        Array.Copy(oldGrid, 0, grid, 0, oldGrid.Length);
+        chessController.blackPlayer.score = oldBlackPlayerScore; //return to original team score
+        chessController.whitePlayer.score = oldWhitePlayerScore;
+    }
+    public void GetBoardScore()
+    {
+        chessController.whitePlayer.score = 0;
+        chessController.blackPlayer.score = 0;
+
+        //for each place on the grid check if piece is there and based on which team it belongs
+        //to add it to the score
+        for (int i = 0; i < grid.GetLength(0); i++)
+        {
+            for (int j = 0; j < grid.GetLength(1); j++)
+            {
+                if (grid[i,j] != null)
+                {
+                    int value; //var used to get value from dictionary
+                    if (grid[i,j].team == chessController.whitePlayer.team)
+                    {
+                        if (pieceToValueDict.TryGetValue(grid[i, j].GetType().ToString(), out value))
+                        {
+                            chessController.whitePlayer.score += value;
+                        }
+                    }
+                    else if (grid[i, j].team == chessController.blackPlayer.team)
+                    {
+                        if (pieceToValueDict.TryGetValue(grid[i, j].GetType().ToString(), out value))
+                        {
+                            chessController.blackPlayer.score += value;
+                        }
+                    }
+                    
+                }
+            }
+        }
+
+
+        Debug.Log(chessController.whitePlayer.team + " score is: " + chessController.whitePlayer.score + "\n"
+            + chessController.blackPlayer.team + " score is: " + chessController.blackPlayer.score);
+    }
+
+
 }

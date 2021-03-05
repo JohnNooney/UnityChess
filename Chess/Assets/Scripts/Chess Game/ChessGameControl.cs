@@ -15,18 +15,15 @@ public class ChessGameControl : MonoBehaviour
     [SerializeField] private Board board;
     [SerializeField] private ChessUIManager manager;
 
+    private ChessAiController chessAi; //manages the ai
     private PieceCreation pieceCreator;
-    private ChessPlayer whitePlayer;
-    private ChessPlayer blackPlayer;
-    private ChessPlayer activePlayer;
-
-    //Personal Code: added score tracking into the game
-    public Dictionary<String, int> pieceToValueDict = new Dictionary<String, int>();
-    //public int blackScore;
-    //public int whiteScore;
+    public ChessPlayer whitePlayer;
+    public ChessPlayer blackPlayer;
+    public ChessPlayer activePlayer;
 
     //Personal Code: computer team identifier
-    private ChessPlayer computer; //one of the players will be human, the other Computer
+    public ChessPlayer computer; //one of the players will be human, the other Computer
+    public bool simulatedEndGame;
 
     private GameState currentState;
 
@@ -39,14 +36,6 @@ public class ChessGameControl : MonoBehaviour
     private void setDependencies()
     {
         pieceCreator = GetComponent<PieceCreation>();
-
-        //Personal Code: Init each piece's score weightss
-        pieceToValueDict.Add("King", 900);
-        pieceToValueDict.Add("Queen", 90);
-        pieceToValueDict.Add("Rook", 50);
-        pieceToValueDict.Add("Bishop", 30);
-        pieceToValueDict.Add("Knight", 30);
-        pieceToValueDict.Add("Pawn", 10);
     }
 
     private void CreatePlayers()
@@ -61,6 +50,8 @@ public class ChessGameControl : MonoBehaviour
     void Start()
     {
         StartNewGame();
+
+        
     }
 
     private void StartNewGame()
@@ -73,9 +64,11 @@ public class ChessGameControl : MonoBehaviour
         GenerateAllPossiblePlayerMoves(activePlayer);
         SetGameState(GameState.Play);
 
+        chessAi = new ChessAiController();
+        chessAi.SetDependencies(this);
+
         //calculate starting scores (should be 1290 for each team)
-        GetBoardScore(whitePlayer);
-        GetBoardScore(blackPlayer);
+        board.GetBoardScore();
     }
 
     public void RestartGame()
@@ -151,20 +144,43 @@ public class ChessGameControl : MonoBehaviour
         GenerateAllPossiblePlayerMoves(GetOpponentToPlayer(activePlayer));
 
         //before the end of the game check the scores of each player
-        GetBoardScore(activePlayer);
+        board.GetBoardScore();
 
         if (CheckGameIsFinished())
         {
+            manager.onNewMove();
             EndGame();
         }
         else
         {
+            manager.onNewMove();
             ChangeActiveTeam();
         }
     }
 
+    //altered version of EndTurn() that doesn't change active teams
+    public void SimulateEndTurn()
+    {
+        //GenerateAllPossiblePlayerMoves(activePlayer);
+        //GenerateAllPossiblePlayerMoves(GetOpponentToPlayer(activePlayer));
+
+        //before the end of the game check the scores of each player
+        board.GetBoardScore();
+
+        if (CheckGameIsFinished())
+        {
+            // manager.onNewMove();
+            simulatedEndGame = true;
+        }
+        //else
+        //{
+        //    manager.onNewMove();
+        //    ChangeActiveTeam();
+        //}
+    }
+
     //Check if there is a check mate on the board
-    private bool CheckGameIsFinished()
+    public bool CheckGameIsFinished()
     {
         Piece[] kingAttackingPieces = activePlayer.GetOpponentAttackingPieces<King>();
         if (kingAttackingPieces.Length > 0)
@@ -237,7 +253,7 @@ public class ChessGameControl : MonoBehaviour
 
     //Personal Code: Currently randomly selects an active piece on the board
     //from that piece, randomly select a possible move
-    public void ComputerMove()
+    public void RandComputerMove()
     {
         Thread.Sleep(200);
         while (true && !CheckGameIsFinished())
@@ -246,7 +262,7 @@ public class ChessGameControl : MonoBehaviour
             //randomly generate coordinates for piece selection
             int randActivePiece = UnityEngine.Random.Range(0, computer.activePieces.Count);
             Piece randPieceSelect = computer.activePieces[randActivePiece];
-            board.ComputerInputRandom(randPieceSelect.occupiedSquare.x, randPieceSelect.occupiedSquare.y); //select
+            board.ComputerInput(randPieceSelect.occupiedSquare.x, randPieceSelect.occupiedSquare.y); //select
 
             //if there is a selected piece
             if (board.selectedPiece != null && board.HasPiece(randPieceSelect) && randPieceSelect.availableMoves.Count > 0)
@@ -255,43 +271,58 @@ public class ChessGameControl : MonoBehaviour
                 int randMove = UnityEngine.Random.Range(0, randPieceSelect.availableMoves.Count);
                 Vector2Int randMoveCoords = randPieceSelect.availableMoves[randMove];
 
-                board.ComputerInputRandom(randMoveCoords.x, randMoveCoords.y); //move
+                board.ComputerInput(randMoveCoords.x, randMoveCoords.y); //move
                 break;
             }
         }
 
     }
 
-    private void GetBoardScore(ChessPlayer player)
+    //Make computer move for MiniMax Algorithm
+    public void ComputerMove()
     {
-        //depending on which player's score is being tested reset it and count again
-        player.score = 0;
 
-        foreach (var activePiece in player.activePieces)
+        int depth = 3;
+        double bestMax = 0;
+        Tuple<Piece, Vector2Int> bestPieceAndMove = null;
+
+        //iterate through every piece
+        foreach (var piece in computer.activePieces)
         {
-            foreach (var pair in pieceToValueDict)
+            Vector2Int piecePosition = new Vector2Int(piece.occupiedSquare.x, piece.occupiedSquare.y);
+
+            //send piece coords, starting depth, and maximizing player start
+            double currentBest = chessAi.MiniMax(piecePosition, depth, true, board);
+            if (currentBest >= bestMax)
             {
-                if (activePiece.GetComponent<Piece>().GetType().ToString() == pair.Key)
-                {
-                    player.score += pair.Value;
-                }
+                bestMax = currentBest;
+                bestPieceAndMove = chessAi.GetBestResult();
+                Debug.Log("Best piece to move: " + bestPieceAndMove.Item1.name + " to " + bestPieceAndMove.Item2.x + "," + bestPieceAndMove.Item2.y);
             }
+            
+           
         }
 
-        Debug.Log( player.team + " score is: " + player.score);
-    }
+        
 
-    //Personal Code: Heuristic Evaluation Function for MiniMax
-    //upon each piece loss evaluate score compared to opponent
-    private int Evaluate(ChessPlayer player)
-    {
-        if (player == whitePlayer)
+        if (bestPieceAndMove != null)
         {
-            return whitePlayer.score - blackPlayer.score;
+            //select piece
+            board.ComputerInput(bestPieceAndMove.Item1.occupiedSquare.x, bestPieceAndMove.Item1.occupiedSquare.y);
+            //move piece
+            board.ComputerInput(bestPieceAndMove.Item2.x, bestPieceAndMove.Item2.y);
+        }
+        else if (bestMax == 0)
+        {
+            RandComputerMove();
         }
         else
         {
-            return blackPlayer.score - whitePlayer.score;
+            Debug.Log("No pieces found. BestMax = " + bestMax);
         }
+       
+
     }
+
+
 }
