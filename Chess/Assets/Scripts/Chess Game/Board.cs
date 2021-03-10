@@ -11,8 +11,9 @@ public class Board : MonoBehaviour
     [SerializeField] private Transform bottomLeftSquareTransform;
     [SerializeField] private float squareSize;
 
-    private Piece[,] grid; //store where the pieces are placed
+    public Piece[,] grid; //store where the pieces are placed
     private Piece[,] oldGrid; //store where the piece of the last move are on the grid
+    private Piece[,] quickGrid; //store the state for each time a move is simulated
     private ChessGameControl chessController; //facade
     private SquareSelectorCreator squareSelector;
 
@@ -20,10 +21,12 @@ public class Board : MonoBehaviour
     public Dictionary<String, int> pieceToValueDict = new Dictionary<String, int>();
     public int oldBlackPlayerScore;
     public int oldWhitePlayerScore;
+    public int quickBlackPlayerScore;
+    public int quickWhitePlayerScore;
 
     public Piece selectedPiece;
-    public bool moveSimulation = false;
 
+    public bool moveSimulation = false;
 
     private void Awake()
     {
@@ -292,7 +295,7 @@ public class Board : MonoBehaviour
                 TryToTakeOppositePiece(move_coords);
                 //update data on grid array (new coordinates, old coordinates, piece, piece in old coords)
                 UpdateBoardOnPieceMove(move_coords, piece.occupiedSquare, piece, null);
-                //selectedPiece.MovePiece(move_coords); //officially moves piece (team score is updated)
+                selectedPiece.MovePiece(move_coords); //officially moves piece (team score is updated)
                 DeselectPiece();
                 chessController.SimulateEndTurn();
             }
@@ -307,6 +310,31 @@ public class Board : MonoBehaviour
         oldBlackPlayerScore = chessController.blackPlayer.score; //save team scores
         oldWhitePlayerScore = chessController.whitePlayer.score;
 
+        //save the piece list state
+        chessController.whitePlayer.SavePieceState();
+        chessController.blackPlayer.SavePieceState();
+
+    }
+
+    public void QuickSaveState()
+    {
+        quickGrid = (Piece[,])grid.Clone();
+        quickBlackPlayerScore = chessController.blackPlayer.score; //save team scores
+        quickWhitePlayerScore = chessController.whitePlayer.score;
+
+        //save the piece list state
+        chessController.computer.QuickSavePieceState();
+    }
+
+    public void QuickReturnState()
+    {
+        Array.Copy(quickGrid, 0, grid, 0, quickGrid.Length);
+        chessController.blackPlayer.score = oldBlackPlayerScore; //return to original team score
+        chessController.whitePlayer.score = oldWhitePlayerScore;
+
+        //save the piece list state
+        chessController.computer.QuickReturnPieceState();
+        //chessController.ResetAllPossiblePlayerMoves(chessController.computer);
     }
 
     public void returnToStartState()
@@ -315,6 +343,10 @@ public class Board : MonoBehaviour
         Array.Copy(oldGrid, 0, grid, 0, oldGrid.Length);
         chessController.blackPlayer.score = oldBlackPlayerScore; //return to original team score
         chessController.whitePlayer.score = oldWhitePlayerScore;
+
+        //return the piece list state
+        chessController.whitePlayer.ReturnPieceState();
+        chessController.blackPlayer.ReturnPieceState();
     }
     public void GetBoardScore()
     {

@@ -1,2 +1,5 @@
 Base path: 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/2019.4.20f1/Editor/Data', plugins path 'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/2019.4.20f1/Editor/Data/PlaybackEngines'
 Cmd: initializeCompiler
+Unhandled exception: Read from shader compiler process failed: error -2147483644, 0/4 bytes read
+
+Quitting shader compiler process

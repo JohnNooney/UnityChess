@@ -11,9 +11,14 @@ public abstract class Piece : MonoBehaviour
 	[SerializeField] private MaterialSetter materialSetter;
 	public Board board { protected get; set; }
 	public Vector2Int occupiedSquare { get; set; }
+
+	//store the coords to revert back to after a simulated move
+	public Vector2Int oldOccupiedSquare { get; set; } 
+
 	public TeamColor team { get; set; }
 	public bool hasMoved { get; private set; }
 	public List<Vector2Int> availableMoves;
+	public List<Vector2Int> availableMovesCopy;
 
 	private IObjectTweener tweener;
 
@@ -22,10 +27,20 @@ public abstract class Piece : MonoBehaviour
 	private void Awake()
 	{
 		availableMoves = new List<Vector2Int>();
+		availableMovesCopy = new List<Vector2Int>();
 		tweener = GetComponent<IObjectTweener>();
 		materialSetter = GetComponent<MaterialSetter>();
 		hasMoved = false;
 	}
+
+	public void CopyMoves()
+    {
+        if (availableMovesCopy.Count != 0)
+        {
+			availableMoves.Clear();
+        }
+		availableMovesCopy = availableMoves.ToList();
+    }
 
 	public void SetMaterial(Material selectedMaterial)
 	{
@@ -44,10 +59,18 @@ public abstract class Piece : MonoBehaviour
 
 	public virtual void MovePiece(Vector2Int coords)
 	{
-		Vector3 targetPosition = board.CalculatePosFromCoords(coords);
-		occupiedSquare = coords;
-		hasMoved = true;
-		tweener.MoveTo(transform, targetPosition);
+        if (board.moveSimulation == true)
+        {
+			occupiedSquare = coords;
+		}
+		else
+        {
+			Vector3 targetPosition = board.CalculatePosFromCoords(coords);
+			occupiedSquare = coords;
+			hasMoved = true;
+			tweener.MoveTo(transform, targetPosition);
+		}
+		
 	}
 
 	public bool IsAttackingPieceOfType<T>() where T : Piece

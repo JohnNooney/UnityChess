@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ChessAiController
@@ -10,6 +11,8 @@ public class ChessAiController
     private double currentEval = 0;
     private Piece bestPiece;
     private Vector2Int bestMove;
+    private List<Piece> activePiecesCopy = new List<Piece>();
+    private List<Vector2Int> availableMovesCopy = new List<Vector2Int>();
 
     private ChessGameControl chessController; //facade
 
@@ -19,75 +22,105 @@ public class ChessAiController
     }
 
     //computer's random algorithm for playing the game
-    public double MiniMax(Vector2Int position, int depth, bool maximizing_player, Board board)
+    public double MiniMax(Piece pieceToMove,Vector2Int position, int depth, bool maximizing_player, Board board)
     {
-        Piece piece = board.GetPieceOnSquare(position);
+        //Piece piece = board.GetPieceOnSquare(position);
+        if (pieceToMove != null)
+        {
+            board.SimulateMove(pieceToMove, position);
+        }
 
         //base case: check that depth is already reached or gameover
         if (depth == 0 || chessController.CheckGameIsFinished())
         {
-            Debug.Log("Max Depth Reached");
-            return Evaluate(piece);
+            Debug.Log("Max Depth Reached. Ending Team: "+ chessController.computer.team + " with " + pieceToMove.name);
+            return Evaluate(pieceToMove);
         }
 
         //check to see if maximizing player or min
         if (maximizing_player)
         {
+            chessController.computer = chessController.blackPlayer;
             maxEval = double.NegativeInfinity;
 
-                foreach (var move in piece.availableMoves)
+            activePiecesCopy = chessController.computer.activePieces.ToList();
+            foreach (var newPiece in activePiecesCopy)
+            {
+                
+                newPiece.CopyMoves();
+                if (newPiece.availableMovesCopy.Count != 0)
                 {
-                    
-                    //save the current grid state to revert back to
-                    //board.saveCurrentGridState();
+                    Debug.Log("Black Turn: " + newPiece.name + " " + newPiece.team + " at " + newPiece.occupiedSquare.x + "," + newPiece.occupiedSquare.y);
 
-                    Debug.Log("tried to move: " + piece.name + " to " + move.x + "," + move.y);
-
-                    //simulate the board move
-                    //board.SimulateMove(piece, move);
-                    currentEval = MiniMax(move, depth-1, false, board);
-
-                    //check if game has ended with move
-                    //if (chessController.simulatedEndGame)
-                    //{
-                    //    SetBestResult(piece, move);
-                    //    return GetBestResult();
-                    //}
-
-                    if (Evaluate(piece) >= maxEval)
+                    foreach (var move in newPiece.availableMovesCopy)
                     {
-                        maxEval = currentEval;
-                        SetBestResult(piece, move);
+
+                        //save the current grid state to revert back to for each move
+                        board.QuickSaveState();
+                        //save the occupied square of piece before moving it
+                        newPiece.oldOccupiedSquare = newPiece.occupiedSquare;
+
+
+
+                        Debug.Log(chessController.computer.team + " tried to move: " + newPiece.name + " to " + move.x + "," + move.y);
+
+                        //simulate the board move
+                        //board.SimulateMove(newPiece, move);
+                        //board.UpdateBoardOnPieceMove(move, newPiece.occupiedSquare, newPiece, null);
+                        currentEval = MiniMax(newPiece, move, depth - 1, false, board);
+
+                        if (Evaluate(newPiece) >= maxEval)
+                        {
+                            maxEval = currentEval;
+                            SetBestResult(newPiece, move);
+                        }
+
+                        //revert board back to starting state
+                        board.QuickReturnState();
+                        newPiece.occupiedSquare = newPiece.oldOccupiedSquare;
+                        //chessController.SimulateEndTurn();
                     }
-
-                    //recurse so that the next move up to the depth max is calculated
-                    //MiniMax(depth - 1, false, board);
-
-                    //choose to save move if better than last move checked
-                    //if (Evaluate(chessController.computer) >= maxEval)
-                    //{
-                    //    SetBestResult(piece, move);
-                    //}
-
-                    //revert board back to starting state
-                    //board.returnToStartState();
                 }
+            }
+
+            //chessController.computer = chessController.whitePlayer;
             return maxEval;
             
         }
-        else
+        else //simulate human move
         {
+            chessController.computer = chessController.whitePlayer;
             minEval = double.PositiveInfinity;
-            foreach (var move in piece.availableMoves)
-            {
-                board.SimulateMove(piece, move);
-                currentEval = MiniMax(move, depth -1, true, board);
-                if (Evaluate(piece) <= minEval)
-                {
-                    minEval = currentEval;
-                }
 
+            foreach (var oppositePiece in chessController.computer.activePieces)
+            {
+                if (oppositePiece.availableMoves.Count != 0)
+                {
+                    foreach (var move in oppositePiece.availableMoves)
+                    {
+                        board.QuickSaveState();
+
+                        //select other teams piece piece (currently still selected knight)
+                        if (chessController.computer == chessController.whitePlayer)
+                        {
+                            Debug.Log("Whites Turn: " + oppositePiece.name + " " + oppositePiece.team + " at " + oppositePiece.occupiedSquare.x + "," + oppositePiece.occupiedSquare.y);
+                        }
+
+                        //board.SimulateMove(oppositePiece, move);
+                        //board.UpdateBoardOnPieceMove(move, oppositePiece.occupiedSquare, oppositePiece, null);
+                        Debug.Log(chessController.computer.team + " tried to move: " + oppositePiece.name + " to " + move.x + "," + move.y);
+                        currentEval = MiniMax(oppositePiece, move, depth - 1, true, board);
+                        if (Evaluate(oppositePiece) <= minEval)
+                        {
+                            minEval = currentEval;
+                        }
+
+                        board.QuickReturnState();
+                    }
+                }
             }
+
+            //chessController.computer = chessController.blackPlayer;
             return minEval;
         }
 

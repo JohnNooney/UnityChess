@@ -138,6 +138,16 @@ public class ChessGameControl : MonoBehaviour
         player.GenerateAllPossibleMoves();
     }
 
+    private void SimulatedGenerateAllPossiblePlayerMoves(ChessPlayer player)
+    {
+        player.SimulateGenerateAllPossibleMoves();
+    }
+
+    public void ResetAllPossiblePlayerMoves(ChessPlayer player)
+    {
+        player.ResetAllPossibleMoves();
+    }
+
     public void EndTurn()
     {
         GenerateAllPossiblePlayerMoves(activePlayer);
@@ -161,8 +171,8 @@ public class ChessGameControl : MonoBehaviour
     //altered version of EndTurn() that doesn't change active teams
     public void SimulateEndTurn()
     {
-        //GenerateAllPossiblePlayerMoves(activePlayer);
-        //GenerateAllPossiblePlayerMoves(GetOpponentToPlayer(activePlayer));
+        SimulatedGenerateAllPossiblePlayerMoves(computer);
+        SimulatedGenerateAllPossiblePlayerMoves(GetOpponentToPlayer(computer));
 
         //before the end of the game check the scores of each player
         board.GetBoardScore();
@@ -172,11 +182,11 @@ public class ChessGameControl : MonoBehaviour
             // manager.onNewMove();
             simulatedEndGame = true;
         }
-        //else
-        //{
-        //    manager.onNewMove();
-        //    ChangeActiveTeam();
-        //}
+        else
+        {
+            //manager.onNewMove();
+            //computer = computer == whitePlayer ? blackPlayer : whitePlayer;
+        }
     }
 
     //Check if there is a check mate on the board
@@ -229,7 +239,7 @@ public class ChessGameControl : MonoBehaviour
 
     public bool ComputerMoveCheck()
     {
-        if (activePlayer == computer)
+        if (computer == whitePlayer || activePlayer == computer)
         {
             return true;
         }
@@ -282,17 +292,19 @@ public class ChessGameControl : MonoBehaviour
     public void ComputerMove()
     {
 
-        int depth = 3;
+        int depth = 1;
         double bestMax = 0;
         Tuple<Piece, Vector2Int> bestPieceAndMove = null;
 
+        board.saveCurrentGridState();
+
         //iterate through every piece
-        foreach (var piece in computer.activePieces)
-        {
-            Vector2Int piecePosition = new Vector2Int(piece.occupiedSquare.x, piece.occupiedSquare.y);
+        //foreach (var piece in computer.activePieces)
+        //{
+            //Vector2Int piecePosition = new Vector2Int(0, 0);
 
             //send piece coords, starting depth, and maximizing player start
-            double currentBest = chessAi.MiniMax(piecePosition, depth, true, board);
+            double currentBest = chessAi.MiniMax(null, new Vector2Int(0, 0), depth, true, board);
             if (currentBest >= bestMax)
             {
                 bestMax = currentBest;
@@ -301,21 +313,24 @@ public class ChessGameControl : MonoBehaviour
             }
             
            
+       // }
+
+        board.returnToStartState();
+
+        if (bestMax == 0)
+        {
+            Debug.Log("Random move hit.");
+            RandComputerMove();
         }
 
-        
-
-        if (bestPieceAndMove != null)
+        else if (bestPieceAndMove != null)
         {
             //select piece
             board.ComputerInput(bestPieceAndMove.Item1.occupiedSquare.x, bestPieceAndMove.Item1.occupiedSquare.y);
             //move piece
             board.ComputerInput(bestPieceAndMove.Item2.x, bestPieceAndMove.Item2.y);
         }
-        else if (bestMax == 0)
-        {
-            RandComputerMove();
-        }
+        
         else
         {
             Debug.Log("No pieces found. BestMax = " + bestMax);

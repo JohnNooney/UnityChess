@@ -10,6 +10,11 @@ public class ChessPlayer
    public TeamColor team { get; set; }
     public Board board { get; set;  }
     public List<Piece> activePieces { get; private set; }
+    public List<Piece> oldActivePieces { get; private set; }
+
+    public List<Piece> quickActivePieces { get; private set; }
+
+    public Stack<List<Piece>> activePieceMove;
 
     public int score;
 
@@ -18,6 +23,9 @@ public class ChessPlayer
         this.board = board;
         this.team = team;
         activePieces = new List<Piece>();
+        oldActivePieces = new List<Piece>();
+        quickActivePieces = new List<Piece>();
+        activePieceMove = new Stack<List<Piece>>();
     }
 
     public void AddPiece(Piece piece)
@@ -39,6 +47,73 @@ public class ChessPlayer
     public void GenerateAllPossibleMoves()
     {
         foreach (var piece in activePieces)
+        {
+            if (board.HasPiece(piece))
+            {
+                piece.SelectAvaliableSquares();
+            }
+        }
+    }
+
+    public void SimulateGenerateAllPossibleMoves()
+    {
+        foreach (var piece in activePieces) //**available squares may not align with grid positions
+        {
+            if (board.HasPiece(piece))
+            {
+                piece.SelectAvaliableSquares(); 
+            }
+        }
+    }
+
+    public void SavePieceState()
+    {
+        if (oldActivePieces.Count != 0)
+        {
+            oldActivePieces.Clear();
+        }
+        
+        oldActivePieces = activePieces.ToList();
+    }
+
+    public void QuickSavePieceState()
+    {
+        if (quickActivePieces.Count != 0)
+        {
+            quickActivePieces.Clear();
+        }
+
+        //quickActivePieces.AddRange(activePieces);
+        quickActivePieces = activePieces.ToList();
+        activePieceMove.Push(activePieces);
+    }
+
+    public void QuickReturnPieceState()
+    {
+        //if (activePieces.Count != 0)
+        //{
+        //    activePieces.Clear();
+        //}
+
+        //activePieces.AddRange(quickActivePieces);
+
+        activePieces = activePieceMove.Peek();
+        activePieceMove.Pop();
+    }
+
+    public void ReturnPieceState()
+    {
+        if (activePieces.Count != 0)
+        {
+            activePieces.Clear();
+        }
+
+        activePieces = oldActivePieces.ToList();
+    }
+
+    public void ResetAllPossibleMoves()
+    {
+        foreach (var piece in oldActivePieces)
         {
             if (board.HasPiece(piece))
             {
