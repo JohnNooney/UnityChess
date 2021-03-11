@@ -11,7 +11,7 @@ The aim is to see how each algorithm performs when pitted against each other. Wi
 
 ## Implementation
 
-The core of the Bayesian network is built on pattern recognition and learning from it's own experience.
+**Bayesian network** is built on pattern recognition and learning from it's own experience.
 
 **Pattern Recongnition**
 - Being able to classify user's moves and exercise an appropriate response.
@@ -20,7 +20,7 @@ The core of the Bayesian network is built on pattern recognition and learning fr
 - Continously refine the search heuristic for realisticly calculating the right moves (Otherwise there are too many possible moves)
 
 
-MinMax is implemented using a recursive tree search. Each node represents a piece's evaluated score after a specific move and the depth is in relation to the current color being simulated.
+**MinMax** is implemented using a recursive tree search. Each node represents a piece's evaluated score after a specific move and the depth is in relation to the current color being simulated.
 
 ![Tree Search](https://cdn-media-1.freecodecamp.org/images/1*UA5VlNs7s4gl80VknA099w.jpeg)
 
